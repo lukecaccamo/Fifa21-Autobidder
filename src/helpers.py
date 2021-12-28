@@ -2504,7 +2504,7 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
 
     tab_url = futbin_url
 
-    openAndSwitchToTab(browser, tab_url)
+    open_and_switch_to_tab(browser, tab_url)
 
     name = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
         (By.XPATH, "/html/body/div[8]/div[15]/div/div/div[1]/div[2]/table/tbody/tr[2]/td"))).text
@@ -2530,7 +2530,7 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     prices_url = 'https://www.futbin.com/22/playerPrices?player={0}'.format(internal_id)
 
     # Prices api seems to need cookies, call through web browser as a workaround
-    openAndSwitchToTab(browser, prices_url)
+    open_and_switch_to_tab(browser, prices_url)
 
     raw_price_data = driver.find_element(By.XPATH, "html/body").text
 
@@ -2649,7 +2649,7 @@ def getUserConfigNonClass():
     return conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling
 
 
-def openAndSwitchToTab(browser, url):
+def open_and_switch_to_tab(browser, url):
     browser.execute_script("window.open('');")
     new_tab_index = len(browser.window_handles) - 1
     browser.switch_to.window(browser.window_handles[new_tab_index])
