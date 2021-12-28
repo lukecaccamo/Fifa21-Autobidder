@@ -2179,106 +2179,15 @@ class Helper:
 
     def getFutbinDataAndPopulateTable(self, futbin_url):
         """
+        I dont think this is used? Can probably remove.
+
         Fetches futbin data and updates data/player_list.txt.
         Opens new tab (kinda annoying)
 
         Location:
             anywhere
         """
-        browser = self.driver
-        driver = self.driver
-
-        tab_url = futbin_url
-
-        browser.execute_script("window.open('');")
-        browser.switch_to.window(browser.window_handles[1])
-        browser.get(tab_url)
-
-        name = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[15]/div/div/div[1]/div[2]/table/tbody/tr[2]/td"))).text
-        team = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[15]/div/div/div[1]/div[2]/table/tbody/tr[3]/td/a"))).text
-        nation = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[12]/div[3]/div[1]/div/ul/li[1]/a"))).text
-        cardtype = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[15]/div/div/div[1]/div[2]/table/tbody/tr[12]/td"))).text
-        rating = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[13]/div[2]/div/div/div[1]/div/a/div/div[2]"))).text
-        cardname = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[13]/div[2]/div/div/div[1]/div/a/div/div[3]"))).text
-        position = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
-            (By.XPATH, "/html/body/div[8]/div[13]/div[2]/div/div/div[1]/div/a/div/div[4]"))).text
-
-        internals_location = driver.find_element(
-            By.XPATH, "/html/body/div[8]/div[5]/div")
-        internal_id = int(internals_location.get_attribute("data-baseid"))
-        futbin_id = internals_location.get_attribute("data-id")
-
-        # price, lastupdated = get_futbin_price_lastupdated(fifa_id)
-
-        r = requests.get(
-            'https://www.futbin.com/22/playerPrices?player={0}'.format(internal_id))
-
-        data = r.json()
-        price = data[str(internal_id)]["prices"]["xbox"]["LCPrice"]
-        lastupdated = data[str(internal_id)]["prices"]["xbox"]["updated"]
-
-        # 18 mins ago
-        # 48 mins ago
-        # 1 hour ago
-        # 2 hours ago
-        if (lastupdated == "Never"):
-            return 0, 100
-        elif ("mins ago" in lastupdated):
-            lastupdated = lastupdated[:-9]
-            lastupdated = int(lastupdated)
-        elif("hour ago" in lastupdated):
-            lastupdated = lastupdated[:-9]
-            lastupdated = int(lastupdated) * 60
-        elif("hours ago" in lastupdated):
-            lastupdated = lastupdated[:-10]
-            lastupdated = int(lastupdated) * 60
-        elif("seconds" in lastupdated):
-            lastupdated = 1
-        elif("second" in lastupdated):
-            lastupdated = 1
-        else:
-            return 0, 100
-
-        price = price.replace(",", "")
-        price = int(price)
-
-        # MINUTES
-        lastupdated = int(lastupdated)
-        futbin_id = int(futbin_id)
-        market_price = 0
-        buy_pct = .85
-        agg = [name, cardname, rating, team, nation, cardtype, position,
-               internal_id, futbin_id, price, lastupdated, market_price, buy_pct]
-
-        full_entry = ""
-        for word in agg:
-            word = str(word)
-            word_comma = word + ","
-            full_entry += word_comma
-
-        # Remove last comma
-        full_entry = full_entry[:-1]
-        print(full_entry)
-
-        # Add new line to end
-        hs = open("./data/player_list.txt", "a", encoding="utf8")
-        hs.write(full_entry + "\n")
-        hs.close()
-
-        log_event(self.queue, "Added player " + str(cardname))
-
-        # ~ ~ ~ ~ ~ ~ ~ Close the futbin tab ~ ~ ~ ~ ~
-        browser.close()
-
-        # Switch back to the first tab with URL A
-        browser.switch_to.window(browser.window_handles[0])
-        # log_event(self.queue, "Fetched player info")
+        getFutbinDataAndPopulateTable(self.driver, futbin_url)
 
     def sleep_approx(self, seconds):
         """
@@ -2595,9 +2504,7 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
 
     tab_url = futbin_url
 
-    browser.execute_script("window.open('');")
-    browser.switch_to.window(browser.window_handles[1])
-    browser.get(tab_url)
+    openAndSwitchToTab(browser, tab_url)
 
     name = WebDriverWait(driver, 20).until(EC.visibility_of_element_located(
         (By.XPATH, "/html/body/div[8]/div[15]/div/div/div[1]/div[2]/table/tbody/tr[2]/td"))).text
@@ -2620,13 +2527,19 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     futbin_id = internals_location.get_attribute("data-id")
 
     # price, lastupdated = get_futbin_price_lastupdated(fifa_id)
+    prices_url = 'https://www.futbin.com/22/playerPrices?player={0}'.format(internal_id)
 
-    r = requests.get(
-        'https://www.futbin.com/22/playerPrices?player={0}'.format(internal_id))
+    # Prices api seems to need cookies, call through web browser as a workaround
+    openAndSwitchToTab(browser, prices_url)
 
-    data = r.json()
-    price = data[str(internal_id)]["prices"]["xbox"]["LCPrice"]
-    lastupdated = data[str(internal_id)]["prices"]["xbox"]["updated"]
+    raw_price_data = driver.find_element(By.XPATH, "html/body").text
+
+    data = json.loads(raw_price_data)
+
+    # Console should be made configurable
+    # The second lowest price is used to try to eliminate underpriced listings
+    price = data[str(internal_id)]["prices"]["pc"]["LCPrice2"]
+    lastupdated = data[str(internal_id)]["prices"]["pc"]["updated"]
 
     # 18 mins ago
     # 48 mins ago
@@ -2657,6 +2570,8 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     lastupdated = int(lastupdated)
     futbin_id = int(futbin_id)
     market_price = 0
+
+    # Buy percentage should also be confgurable
     buy_pct = .85
     agg = [name, cardname, rating, team, nation, cardtype, position,
            internal_id, futbin_id, price, lastupdated, market_price, buy_pct]
@@ -2677,6 +2592,12 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     hs.close()
 
     log_event(queue, "Added player " + str(cardname))
+
+    # ~ ~ ~ ~ ~ ~ ~ Close the price data tab ~ ~ ~ ~ ~
+    browser.close()
+
+    # Switch back to the futbin tab
+    browser.switch_to.window(browser.window_handles[1])
 
     # ~ ~ ~ ~ ~ ~ ~ Close the futbin tab ~ ~ ~ ~ ~
     browser.close()
@@ -2726,3 +2647,10 @@ def getUserConfigNonClass():
 
     # Return values but this really shouldn't be used - only used on initialization
     return conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling
+
+
+def openAndSwitchToTab(browser, url):
+    browser.execute_script("window.open('');")
+    new_tab_index = len(browser.window_handles) - 1
+    browser.switch_to.window(browser.window_handles[new_tab_index])
+    browser.get(url)

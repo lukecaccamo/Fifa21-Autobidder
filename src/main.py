@@ -81,7 +81,7 @@ class PlayerFilters(tk.Frame):
         self.controller = controller
         self.playerlist = []
 
-        app_title = tk.Label(self, text=' FIFA 21 Autobidder + Autobuyer ', font=HEADER_FONT)
+        app_title = tk.Label(self, text=' FIFA 22 Autobidder + Autobuyer ', font=HEADER_FONT)
         app_title.grid(row=1, column=0, columnspan=2, pady=15)
 
         futbinlink_label = tk.Label(self, text='Player Futbin URL: ', font=NORM_FONT)
@@ -872,5 +872,5 @@ class ThreadedClient(threading.Thread):
 # TODO insert create logins.txt method here, that makes first line say not entered - update msgbox method
 clearOldUserData_nonclass()
 app = GUI()
-app.title("TMB's FIFA 21 Autobidder")
+app.title("TMB's FIFA 22 Autobidder")
 app.mainloop()
