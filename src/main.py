@@ -34,11 +34,10 @@ from helpers import *
 import threading
 import time
 
-LARGE_FONT= ("Verdana", 12)
+LARGE_FONT = ("Verdana", 12)
 SMALL_FONT = ("Verdana", 8)
 NORM_FONT = ("Helvetica", 10)
 HEADER_FONT = ("Helvetica", 12, "bold")
-
 
 class GUI(tk.Tk):
 
@@ -60,19 +59,22 @@ class GUI(tk.Tk):
         self.displaylogs = DisplayLogs(self.container, self)
 
         # TOP RIGHT Main UI
-        self.playerfilters.grid(row=0, column=0, sticky="nsew", padx="5", pady="5")
+        self.playerfilters.grid(
+            row=0, column=0, sticky="nsew", padx="5", pady="5")
 
         # MIDDLE RIGHT Player Input List Table
         self.table.grid(row=1, column=0, sticky="nsew", padx="5", pady="5")
 
         # FULL RIGHT Autobidder / Buyer Stats
-        self.mainbuttons.grid(row=0, column=1, rowspan=3, sticky="nsew", padx="5", pady="5")
+        self.mainbuttons.grid(row=0, column=1, rowspan=3,
+                              sticky="nsew", padx="5", pady="5")
 
         # BOTTOM RIGHT Logs
-        self.displaylogs.grid(row=2, column=0, sticky="nsew", padx="5", pady="5")        
+        self.displaylogs.grid(
+            row=2, column=0, sticky="nsew", padx="5", pady="5")
 
 
-# Top right 
+# Top right
 class PlayerFilters(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -82,53 +84,62 @@ class PlayerFilters(tk.Frame):
         self.controller = controller
         self.playerlist = []
 
-        app_title = tk.Label(self, text=' FIFA 22 Autobidder + Autobuyer ', font=HEADER_FONT)
+        app_title = tk.Label(
+            self, text=' FIFA 22 Autobidder + Autobuyer ', font=HEADER_FONT)
         app_title.grid(row=1, column=0, columnspan=2, pady=15)
 
-        futbinlink_label = tk.Label(self, text='Player Futbin URL: ', font=NORM_FONT)
+        futbinlink_label = tk.Label(
+            self, text='Player Futbin URL: ', font=NORM_FONT)
         futbinlink_text = tk.StringVar()
         futbin_entry = tk.Entry(self, textvariable=futbinlink_text)
 
         futbinlink_label.grid(row=2, column=0)
         futbin_entry.grid(row=2, column=1)
 
-        
-        self.add_btn_futbin = tk.Button(self, text='Add Player', width=12, command=self.add_player_futbin)
+        self.add_btn_futbin = tk.Button(
+            self, text='Add Player', width=12, command=self.add_player_futbin)
         self.add_btn_futbin.grid(row=3, column=0, pady=10)
 
-        self.remove_btn = tk.Button(self, text='Remove Player', width=12, command=self.remove_player)
+        self.remove_btn = tk.Button(
+            self, text='Remove Player', width=12, command=self.remove_player)
         self.remove_btn.grid(row=3, column=1, pady=10)
 
-
-        disclaimer2 = tk.StringVar()
-        disclaimer_text2 = tk.Label(self, text='Futbin price will be used as truth in initial searches, after which logged market data collected via search will be analyzed and used as true price', font=SMALL_FONT, wraplength=400)
+        disclaimer_text2 = tk.Label(
+            self, text='Futbin price will be used as truth in initial searches, after which logged market data collected via search will be analyzed and used as true price', font=SMALL_FONT, wraplength=400)
         disclaimer_text2.grid(row=4, column=0, columnspan=2)
 
         self.futbinlink_text = futbinlink_text
 
         loginLabel = tk.Label(self, text='Auto Login: ')
         botChoice = tk.Label(self, text='Bot Method: ')
-        loginLabel.grid(row = 5, column = 0)
-        botChoice.grid(row = 7, column = 0)
+        loginLabel.grid(row=5, column=0)
+        botChoice.grid(row=7, column=0)
 
         self.autologin_choice = tk.IntVar()
         self.bot_choice = tk.IntVar()
-        self.autologin_choice.set(0) 
+        self.autologin_choice.set(0)
         self.bot_choice.set(0)
 
         self.dev_choice = tk.IntVar()
 
-        self.autologinFalse = tk.Radiobutton(self, text="Disabled", padx = 20,  variable=self.autologin_choice,  command=self.chooseLoginType, value=0).grid(row=5, column = 1)
-        self.autologinTrue = tk.Radiobutton(self, text="Enabled", padx = 20,  variable=self.autologin_choice,  command=self.chooseLoginType, value=1).grid(row=6, column = 1)
-        self.botchoiceAutobidder = tk.Radiobutton(self, text="AutoBidder", padx = 20,  variable=self.bot_choice,  command=self.chooseBotType, value=0).grid(row=7, column = 1)
-        self.botchoiceAutobuyer = tk.Radiobutton(self, text="AutoBuyer", padx = 20,  variable=self.bot_choice,  command=self.chooseBotType, value=1).grid(row=8, column = 1)
-        self.devModeCheckbox = tk.Checkbutton(self, text='Developer mode',variable=self.dev_choice, onvalue=1, offvalue=0, command=self.chooseDevMode).grid(row = 9, column = 0)
+        tk.Radiobutton(
+            self, text="Disabled", padx=20,  variable=self.autologin_choice,  command=self.chooseLoginType, value=0).grid(row=5, column=1)
+        tk.Radiobutton(
+            self, text="Enabled", padx=20,  variable=self.autologin_choice,  command=self.chooseLoginType, value=1).grid(row=6, column=1)
+        tk.Radiobutton(
+            self, text="AutoBidder", padx=20,  variable=self.bot_choice,  command=self.chooseBotType, value=0).grid(row=7, column=1)
+        tk.Radiobutton(
+            self, text="AutoBuyer", padx=20,  variable=self.bot_choice,  command=self.chooseBotType, value=1).grid(row=8, column=1)
+        tk.Checkbutton(self, text='Developer mode', variable=self.dev_choice,
+                                              onvalue=1, offvalue=0, command=self.chooseDevMode).grid(row=9, column=0)
 
         self.login_btn_text = tk.StringVar()
         self.login_btn_text.set("Auto Login")
-        self.login = tk.Button(self, textvariable=self.login_btn_text, width=30, command=self.login)
-        self.login.grid(row=10, column=0, columnspan = 2, pady=25)
-        self.reloadFunctions = tk.Button(self, text='Reload', command=self.reloadfunctions)
+        self.login = tk.Button(
+            self, textvariable=self.login_btn_text, width=30, command=self.loginUser)
+        self.login.grid(row=10, column=0, columnspan=2, pady=25)
+        self.reloadFunctions = tk.Button(
+            self, text='Reload', command=self.reloadfunctions)
         self.reloadFunctions.grid(row=9, column=1)
         self.reloadFunctions.grid_remove()
 
@@ -158,7 +169,6 @@ class PlayerFilters(tk.Frame):
                 pathstr_new = pathstr[:-11]
                 pathstr_new = pathstr_new + "data"
 
-
                 log_event(self.controller.parentQueue, pathstr)
                 log_event(self.controller.parentQueue, pathstr_new)
 
@@ -167,7 +177,7 @@ class PlayerFilters(tk.Frame):
 
                 completeName = os.path.join(save_path, file_name)
                 # print(completeName)
-              
+
                 file1 = open(completeName, "w")
                 file1.write("EA login \nEA password\nEmail login (enter some fake random email if not using auto-code fetch)\nLine 4: Email password (same as above, fill with fake password, it might cause an exception otherwise. Main benefit of autologin is code fetching so you probably should just login manually if not using)")
                 file1.close()
@@ -193,7 +203,8 @@ class PlayerFilters(tk.Frame):
         self.add_btn_futbin.config(state="disabled")
         self.remove_btn.config(state="disabled")
         self.controller.mainbuttons.test2.config(state="disabled")
-        self.thread = ThreadedClient(self.controller.parentQueue, futbin_url, "add player", self.controller.mainbuttons.driver)
+        self.thread = ThreadedClient(
+            self.controller.parentQueue, futbin_url, "add player", self.controller.mainbuttons.driver)
         self.thread.start()
         self.periodiccall()
 
@@ -224,7 +235,8 @@ class PlayerFilters(tk.Frame):
             values_small_view.append(buyceiling)
             values_small_view.append(sellceiling)
 
-            self.controller.table.router_tree_view.insert('', 'end', values=values_small_view)
+            self.controller.table.router_tree_view.insert(
+                '', 'end', values=values_small_view)
         txt.close()
 
         # Every 10 seconds refresh
@@ -232,13 +244,13 @@ class PlayerFilters(tk.Frame):
 
     def remove_player(self):
         index = self.controller.table.router_tree_view.selection()[0]
-        selected_item = self.controller.table.router_tree_view.item(index)['values']
+        selected_item = self.controller.table.router_tree_view.item(index)[
+            'values']
         player_to_remove_name = selected_item[0]
 
         # print(player_to_remove_name)
 
         txt = open("./data/player_list.txt", "r", encoding="utf8")
-
 
         entries_to_stay = []
         for line in txt:
@@ -270,13 +282,12 @@ class PlayerFilters(tk.Frame):
 
         self.update_list()
 
-    def login(self):
+    def loginUser(self):
         choice = str(self.autologin_choice.get())
-
 
         if (choice == "1"):
             login_exists = path.exists("./data/logins.txt")
-            
+
             if login_exists:
                 log_event(self.controller.parentQueue, "Auto logging in...")
                 txt = open("./data/logins.txt", "r")
@@ -290,15 +301,14 @@ class PlayerFilters(tk.Frame):
                     self.login.config(state="disabled")
                     self.login_btn_text.set("Logging/logged in")
 
-                    self.thread = ThreadedClient(self.controller.parentQueue, 0, "login", self.controller.mainbuttons.driver)
-                    
+                    self.thread = ThreadedClient(
+                        self.controller.parentQueue, 0, "login", self.controller.mainbuttons.driver)
+
                     self.thread.start()
                     self.periodiccall()
 
                 else:
                     self.popupmsg("Logins.txt formatted wrong, login manually")
-
-                
 
                 # self.after(100, self.process_queue)
 
@@ -326,7 +336,7 @@ class PlayerFilters(tk.Frame):
                 self.controller.mainbuttons.listbox.insert('end', msg)
                 self.write_logs_tofile(msg)
                 self.controller.mainbuttons.progressbar.step(1)
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
     def write_logs_tofile(self, event):
@@ -345,7 +355,7 @@ class PlayerFilters(tk.Frame):
         popup.wm_title("Note")
         label = ttk.Label(popup, text=msg, font=NORM_FONT)
         label.pack(side="top", fill="x", pady=10)
-        B1 = ttk.Button(popup, text="Okay", command = popup.destroy)
+        B1 = ttk.Button(popup, text="Okay", command=popup.destroy)
         B1.pack()
         log_event(self.controller.parentQueue, str(msg))
         popup.mainloop()
@@ -355,6 +365,8 @@ class PlayerFilters(tk.Frame):
         importlib.reload(helpers)
 
 # Middle right
+
+
 class Table(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -364,12 +376,14 @@ class Table(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.status = tk.Label(self, text="Player List", font=LARGE_FONT)
-        self.status.grid(row = 0, column = 0)
+        self.status.grid(row=0, column=0)
 
         # Player list table
-        columns = ["Name", "Rating", "Futbin Price", "Real Price", "Buy %", "Sell %"]
+        columns = ["Name", "Rating", "Futbin Price",
+                   "Real Price", "Buy %", "Sell %"]
 
-        self.router_tree_view = Treeview(self, columns=columns, show="headings", height=5)
+        self.router_tree_view = Treeview(
+            self, columns=columns, show="headings", height=5)
         # self.router_tree_view.column("id", width=30)
 
         for col in columns:
@@ -380,7 +394,7 @@ class Table(tk.Frame):
             self.router_tree_view.heading(col, text=col)
 
         #router_tree_view.bind('<<TreeviewSelect>>', select_router)
-        self.router_tree_view.grid(row=1,column=0)
+        self.router_tree_view.grid(row=1, column=0)
 
         # LOAD IN TABLE
         txt = open("./data/player_list.txt", "r", encoding="utf8")
@@ -413,13 +427,15 @@ class Table(tk.Frame):
         txt.close()
 
 # Full Left
+
+
 class MainButtons(tk.Frame):
 
     def __init__(self, parent, controller):
 
         self.parent = parent
         self.controller = controller
-
+        self.thread = None
         # ~ ~ ~ ~ INITIATE BOT ~ ~ ~ ~ ~
         log_event(self.controller.parentQueue, " - - - - Bot started - - - - ")
         self.driver = self.create_driver()
@@ -440,7 +456,7 @@ class MainButtons(tk.Frame):
         autobidderstats_json = open('./data/gui_stats.json')
         json1_str = autobidderstats_json.read()
         autobidder_data = json.loads(json1_str)[0]
-        
+
         self.autobidder_labels = []
         count = 0
         for key, value in autobidder_data.items():
@@ -448,16 +464,18 @@ class MainButtons(tk.Frame):
             value = str(value)
             valuevar = tk.StringVar()
             valuevar.set('')
-            tk.Label(self.autobidderFrame, text=key).grid(row=count, column=0, sticky = W)
-            tk.Label(self.autobidderFrame, textvariable=valuevar).grid(row=count, column=1)
+            tk.Label(self.autobidderFrame, text=key).grid(
+                row=count, column=0, sticky=W)
+            tk.Label(self.autobidderFrame, textvariable=valuevar).grid(
+                row=count, column=1)
             self.autobidder_labels.append(valuevar)
-            count+=1
+            count += 1
 
         # Load Autobuyer stats
         autobuyerstats_json = open('./data/autobuyer_stats.json')
         json2_str = autobuyerstats_json.read()
         autobuyer_data = json.loads(json2_str)[0]
-        
+
         self.autobuyer_labels = []
         count = 0
         for key, value in autobuyer_data.items():
@@ -465,10 +483,12 @@ class MainButtons(tk.Frame):
             value = str(value)
             valuevar = tk.StringVar()
             valuevar.set('yup')
-            tk.Label(self.autobuyer, text=key).grid(row=count, column=0, sticky = W)
-            tk.Label(self.autobuyer, textvariable=valuevar).grid(row=count, column=1)
+            tk.Label(self.autobuyer, text=key).grid(
+                row=count, column=0, sticky=W)
+            tk.Label(self.autobuyer, textvariable=valuevar).grid(
+                row=count, column=1)
             self.autobuyer_labels.append(valuevar)
-            count+=1
+            count += 1
 
         num_autobidder_labels = len(autobidder_data)
         num_autobuyer_labels = len(autobuyer_data)
@@ -476,126 +496,150 @@ class MainButtons(tk.Frame):
         # Start autobidder button
         self.startautobidder_label = tk.StringVar()
         self.startautobidder_label.set("Start Autobidder")
-        self.test2 = tk.Button(self.autobidderFrame, textvariable=self.startautobidder_label, width=15, command=self.startAutobidder)
+        self.test2 = tk.Button(
+            self.autobidderFrame, textvariable=self.startautobidder_label, width=15, command=self.startAutobidder)
         self.test2.grid(row=num_autobidder_labels+1, column=0)
-        self.test3 = tk.Button(self.autobuyer, text='Start Autobuyer', width=15, command=self.startAutobuyer).grid(row=num_autobuyer_labels+1, column=0, columnspan = 2)
+        tk.Button(self.autobuyer, text='Start Autobuyer', width=15, command=self.startAutobuyer).grid(
+            row=num_autobuyer_labels+1, column=0, columnspan=2)
 
         # Manage watchlist button - only pops up when autobidder not running
         self.managewatchlist_label = tk.StringVar()
         self.managewatchlist_label.set("Manage Watchlist")
-        self.manageWatchlistButton = tk.Button(self.autobidderFrame, textvariable=self.managewatchlist_label, width=15, command=self.startWatchlist)
+        self.manageWatchlistButton = tk.Button(
+            self.autobidderFrame, textvariable=self.managewatchlist_label, width=15, command=self.startWatchlist)
         self.manageWatchlistButton.grid(row=num_autobidder_labels+1, column=1)
 
         # Bid conservation mode
-        self.autobidder_safe_label = tk.Label(self.autobidderFrame, text='Minimize wasted bids (start bid at 65 pct val): ', font=SMALL_FONT)
+        self.autobidder_safe_label = tk.Label(
+            self.autobidderFrame, text='Minimize wasted bids (start bid at 65 pct val): ', font=SMALL_FONT)
         self.autobidder_safe_label.grid(row=num_autobidder_labels+2, column=0)
         self.autobidder_safe_option = tk.IntVar()
-        self.autobidder_safe_checkbox = tk.Checkbutton(self.autobidderFrame, text='',variable=self.autobidder_safe_option, onvalue=1, offvalue=0, command=self.chooseSafeMode).grid(row = num_autobidder_labels+2, column = 1)
+        tk.Checkbutton(self.autobidderFrame, text='', variable=self.autobidder_safe_option,
+                                                       onvalue=1, offvalue=0, command=self.chooseSafeMode).grid(row=num_autobidder_labels+2, column=1)
 
         # Sleep time between rounds
-        self.sleeptime_label = tk.Label(self.autobidderFrame, text='Sleep between rounds (mins): ', font=SMALL_FONT)
-        self.sleeptime_text = tk.IntVar(value = 3)
-        self.sleeptime_entry = tk.Entry(self.autobidderFrame, textvariable=self.sleeptime_text, width=3)
+        self.sleeptime_label = tk.Label(
+            self.autobidderFrame, text='Sleep between rounds (mins): ', font=SMALL_FONT)
+        self.sleeptime_text = tk.IntVar(value=3)
+        self.sleeptime_entry = tk.Entry(
+            self.autobidderFrame, textvariable=self.sleeptime_text, width=3)
         self.sleeptime_label.grid(row=num_autobidder_labels+3, column=0)
         self.sleeptime_entry.grid(row=num_autobidder_labels+3, column=1)
 
         # Bot speed
-        self.autobidder_speed_label = tk.Label(self.autobidderFrame, text='Bot Speed: ', font=SMALL_FONT)
+        self.autobidder_speed_label = tk.Label(
+            self.autobidderFrame, text='Bot Speed: ', font=SMALL_FONT)
         self.autobidder_speed_label.grid(row=num_autobidder_labels+4, column=0)
-        self.SPEEDCHOICE = [1, 2, 3]
-        self.autobidder_speed_option = tk.IntVar()
+        self.SPEEDCHOICE = [1, 1.25, 1.5]
+        self.autobidder_speed_option = tk.StringVar()
         self.autobidder_speed_option.set(self.SPEEDCHOICE[0])
-        self.autobidder_speed_dropdown = OptionMenu(self.autobidderFrame, self.autobidder_speed_option, *self.SPEEDCHOICE)
-        self.autobidder_speed_dropdown.grid(row = num_autobidder_labels+4, column = 1)
+        self.autobidder_speed_dropdown = OptionMenu(
+            self.autobidderFrame, self.autobidder_speed_option, *self.SPEEDCHOICE)
+        self.autobidder_speed_dropdown.grid(
+            row=num_autobidder_labels+4, column=1)
 
         # Bid up to X Minutes choice
-        self.expirationtime_label = tk.Label(self.autobidderFrame, text='Bid players up to (mins till expiry): ', font=SMALL_FONT)
+        self.expirationtime_label = tk.Label(
+            self.autobidderFrame, text='Bid players up to (mins till expiry): ', font=SMALL_FONT)
         self.expirationtime_label.grid(row=num_autobidder_labels+5, column=0)
         self.EXPIRATIONCHOICE = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55]
         self.expirationtime_option = tk.IntVar()
         self.expirationtime_option.set(self.EXPIRATIONCHOICE[5])
-        self.expirationtime_dropdown = OptionMenu(self.autobidderFrame, self.expirationtime_option, *self.EXPIRATIONCHOICE)
-        self.expirationtime_dropdown.grid(row = num_autobidder_labels+5, column = 1)
+        self.expirationtime_dropdown = OptionMenu(
+            self.autobidderFrame, self.expirationtime_option, *self.EXPIRATIONCHOICE)
+        self.expirationtime_dropdown.grid(
+            row=num_autobidder_labels+5, column=1)
 
         # BUY CEILING
-        self.buyceiling_label = tk.Label(self.autobidderFrame, text='Buy ceiling: ', font=SMALL_FONT)
+        self.buyceiling_label = tk.Label(
+            self.autobidderFrame, text='Buy ceiling: ', font=SMALL_FONT)
         self.buyceiling_label.grid(row=num_autobidder_labels+6, column=0)
-        self.BUYCHOICE = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
+        self.BUYCHOICE = [25, 30, 35, 40, 45, 50,
+                          55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
         self.buyceiling_option = tk.IntVar()
         self.buyceiling_option.set(self.BUYCHOICE[0])
-        self.buyceiling_dropdown = OptionMenu(self.autobidderFrame, self.buyceiling_option, *self.BUYCHOICE)
-        self.buyceiling_dropdown.grid(row = num_autobidder_labels+6, column = 1)
+        self.buyceiling_dropdown = OptionMenu(
+            self.autobidderFrame, self.buyceiling_option, *self.BUYCHOICE)
+        self.buyceiling_dropdown.grid(row=num_autobidder_labels+6, column=1)
 
         # SELL CEILING
-        self.sellceiling_label = tk.Label(self.autobidderFrame, text='Sell ceiling: ', font=SMALL_FONT)
+        self.sellceiling_label = tk.Label(
+            self.autobidderFrame, text='Sell ceiling: ', font=SMALL_FONT)
         self.sellceiling_label.grid(row=num_autobidder_labels+7, column=0)
         self.SELLCHOICE = [80, 85, 90, 95, 100, 125, 150, 175, 200]
         self.sellceiling_option = tk.IntVar()
         self.sellceiling_option.set(self.SELLCHOICE[0])
-        self.sellceiling_dropdown = OptionMenu(self.autobidderFrame, self.sellceiling_option, *self.SELLCHOICE)
-        self.sellceiling_dropdown.grid(row = num_autobidder_labels+7, column = 1)
-    
+        self.sellceiling_dropdown = OptionMenu(
+            self.autobidderFrame, self.sellceiling_option, *self.SELLCHOICE)
+        self.sellceiling_dropdown.grid(row=num_autobidder_labels+7, column=1)
+
         # Save options
-        self.saveoptions = tk.Button(self.autobidderFrame, text='Save Configuration', width=15, command=self.saveConfig).grid(row=num_autobidder_labels+8, column=0, columnspan = 2)
+        tk.Button(self.autobidderFrame, text='Save Configuration', width=15, command=self.saveConfig).grid(
+            row=num_autobidder_labels+8, column=0, columnspan=2)
         self.autobuyer.grid_remove()
 
         # Update GUI labels + instantiate user config
         self.update_stat_labels()
-        self.saveConfig()
+
+        if (config_exists()):
+            conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling = getUserConfigNonClass()
+            # Convert sleep_time to minutes
+            self.sleeptime_text.set(int(sleep_time / 60))
+            self.autobidder_speed_option.set(botspeed)
+            self.autobidder_safe_option.set(conserve_bids)
+            self.expirationtime_option.set(bidexpiration_ceiling)
+            self.buyceiling_option.set(buyceiling * 100)
+            self.sellceiling_option.set(sellceiling * 100)
+        else:
+            self.saveConfig()
 
         # Listbox
         self.listbox = tk.Listbox(self.autobidderFrame, width=5, height=1)
-        self.listbox.grid(row=num_autobidder_labels+9, column=0, columnspan = 7)
+        self.listbox.grid(row=num_autobidder_labels+9, column=0, columnspan=7)
         self.progressbar = ttk.Progressbar(self.autobidderFrame, orient='horizontal',
                                            length=300, mode='determinate')
-        self.progressbar.grid(row=num_autobidder_labels+10, column=0, columnspan = 7)
+        self.progressbar.grid(row=num_autobidder_labels +
+                              10, column=0, columnspan=7)
         self.isFirstStart = True
 
     def startAutobidder(self):
-        devModeState = self.controller.playerfilters.dev_choice.get()
-        if (not self.isFirstStart and self.thread.isAlive()):
-            self.stopAutobidder()
-        elif (devModeState == 1):
-            print("devmode enabled on button click startAutobidder")
-            # Disable the start button
-            self.startautobidder_label.set("Autobidder devmode")
-            self.controller.playerfilters.add_btn_futbin.config(state="disabled")
-            self.controller.playerfilters.remove_btn.config(state="disabled")
-            autobidder_reloaded = Autobidder(self.driver, self.controller.parentQueue)
-            self.thread = ThreadedClient(self.controller.parentQueue, self.isFirstStart, "autobidder developer", self.driver, autobidder_reloaded)
-            self.thread.start()
-            self.periodiccall()
-            self.isFirstStart = False
+        if (not self.isFirstStart and self.thread.is_alive()):
+            self.stop_autobidder()
         else:
             # Disable the add player buttons
             self.startautobidder_label.set("Autobidder Running")
-            self.controller.playerfilters.add_btn_futbin.config(state="disabled")
+            self.controller.playerfilters.add_btn_futbin.config(
+                state="disabled")
             self.controller.playerfilters.remove_btn.config(state="disabled")
-            parent_autobidder = Autobidder(self.driver, self.controller.parentQueue)
-            self.thread = ThreadedClient(self.controller.parentQueue, self.isFirstStart, "autobidder", self.driver, parent_autobidder)
+            parent_autobidder = Autobidder(
+                self.driver, self.controller.parentQueue)
+            self.thread = ThreadedClient(
+                self.controller.parentQueue, self.isFirstStart, "autobidder", self.driver, parent_autobidder)
             self.thread.start()
             self.periodiccall()
             self.isFirstStart = False
 
-    def stopAutobidder(self):
-            self.startautobidder_label.set("Autobidder")
-            self.controller.playerfilters.add_btn_futbin.config(state="active")
-            self.controller.playerfilters.remove_btn.config(state="active")
-            self.thread.raise_exception()
-            self.periodiccall()
-            self.isFirstStart = False
+    def stop_autobidder(self):
+        self.startautobidder_label.set("Autobidder")
+        self.controller.playerfilters.add_btn_futbin.config(state="active")
+        self.controller.playerfilters.remove_btn.config(state="active")
+        self.thread.raise_exception()
+        self.periodiccall()
+        self.isFirstStart = False
 
     def startWatchlist(self):
-            self.test2.config(state="disabled")
-            self.manageWatchlistButton.config(state="disabled")
-            self.startautobidder_label.set("Autobidder Running")
-            self.controller.playerfilters.add_btn_futbin.config(state="disabled")
-            self.controller.playerfilters.remove_btn.config(state="disabled")
-            parent_autobidder = Autobidder(self.driver, self.controller.parentQueue)
-            self.thread = ThreadedClient(self.controller.parentQueue, self.isFirstStart, "watchlist", self.driver, parent_autobidder)
-            self.thread.start()
-            self.periodiccall()
-            self.isFirstStart = False
+        self.test2.config(state="disabled")
+        self.manageWatchlistButton.config(state="disabled")
+        self.startautobidder_label.set("Autobidder Running")
+        self.controller.playerfilters.add_btn_futbin.config(state="disabled")
+        self.controller.playerfilters.remove_btn.config(state="disabled")
+        parent_autobidder = Autobidder(
+            self.driver, self.controller.parentQueue)
+        self.thread = ThreadedClient(
+            self.controller.parentQueue, self.isFirstStart, "watchlist", self.driver, parent_autobidder)
+        self.thread.start()
+        self.periodiccall()
+        self.isFirstStart = False
 
     def periodiccall(self):
         self.checkqueue()
@@ -615,7 +659,7 @@ class MainButtons(tk.Frame):
                 self.listbox.insert('end', msg)
                 self.write_logs_tofile(msg)
                 self.progressbar.step(1)
-            except Queue.Empty:
+            except queue.Empty:
                 pass
 
     def write_logs_tofile(self, event):
@@ -636,26 +680,12 @@ class MainButtons(tk.Frame):
         buyceiling = int(self.buyceiling_option.get())
         sellceiling = int(self.sellceiling_option.get())
 
-        if (botspeed == 1):
-            botspeed = 1
-        if (botspeed == 2):
-            botspeed = 1.25
-        if (botspeed == 3):
-            botspeed = 1.5
-
         sleeptime_seconds = sleeptime*60
         log_event(self.controller.parentQueue, "Configuration saved")
 
-        # log_event(self.controller.parentQueue, "Bot speed: " + str(botspeed))
-        # log_event(self.controller.parentQueue, "Sleep time: " + str(sleeptime))
-        # log_event(self.controller.parentQueue, "Safe mode: " + str(safemode))
-        # log_event(self.controller.parentQueue, "Bid time expiration ceiling: " + str(expirationtime))
-        # log_event(self.controller.parentQueue, "Buy ceiling: " + str(buyceiling/100))
-        # log_event(self.controller.parentQueue, "Sell ceiling: " + str(sellceiling/100))
-
         with open('./data/config.json', 'r') as f:
             json_data = json.load(f)
-            # json_data2 = json_data[0] 
+            # json_data2 = json_data[0]
             json_data[0]["conserve_bids"] = safemode
             json_data[0]["sleep_time"] = sleeptime_seconds
             json_data[0]["speed"] = botspeed
@@ -680,7 +710,7 @@ class MainButtons(tk.Frame):
 
         with open('./data/config.json', 'r') as f:
             json_data = json.load(f)
-            # json_data2 = json_data[0] 
+            # json_data2 = json_data[0]
             json_data[0]["conserve_bids"] = choice
 
         with open('./data/config.json', 'w') as f:
@@ -702,7 +732,8 @@ class MainButtons(tk.Frame):
         # For older ChromeDriver under version 79.0.3945.16
         option.add_argument("--ignore-certificate-error")
         option.add_argument("--ignore-ssl-errors")
-        option.add_experimental_option("excludeSwitches", ["enable-automation"])
+        option.add_experimental_option(
+            "excludeSwitches", ["enable-automation"])
         option.add_experimental_option('useAutomationExtension', False)
 
         # For ChromeDriver version 79.0.3945.16 or over
@@ -720,7 +751,7 @@ class MainButtons(tk.Frame):
             autobidderstats_json = open('./data/gui_stats.json')
             json1_str = autobidderstats_json.read()
             autobidder_data = json.loads(json1_str)[0]
-            
+
             autobiddervals = []
             for key, value in autobidder_data.items():
                 autobiddervals.append(value)
@@ -729,7 +760,7 @@ class MainButtons(tk.Frame):
             autobuyerstats_json = open('./data/autobuyer_stats.json')
             json2_str = autobuyerstats_json.read()
             autobuyer_data = json.loads(json2_str)[0]
-            
+
             autobuyervals = []
             for key, value in autobuyer_data.items():
                 autobuyervals.append(value)
@@ -738,13 +769,13 @@ class MainButtons(tk.Frame):
             for label in self.autobidder_labels:
                 val = label.get()
                 label.set(autobiddervals[count])
-                count+=1
-            
+                count += 1
+
             count = 0
             for label in self.autobuyer_labels:
                 val = label.get()
                 label.set(autobuyervals[count])
-                count+=1
+                count += 1
 
             self.after(300, self.update_stat_labels)
         except:
@@ -768,6 +799,8 @@ class MainButtons(tk.Frame):
             self.after(100, self.process_queue)
 
 # Bottom right
+
+
 class DisplayLogs(tk.Frame):
 
     def __init__(self, parent, controller):
@@ -778,7 +811,7 @@ class DisplayLogs(tk.Frame):
         tk.Frame.__init__(self, parent)
 
         self.status2 = tk.Label(self, text="Logs", font=LARGE_FONT)
-        self.status2.grid(row = 0, column = 0)
+        self.status2.grid(row=0, column=0)
 
         # Player list table
         columns = ['log']
@@ -790,7 +823,7 @@ class DisplayLogs(tk.Frame):
             self.loggings.heading(col, text=col)
 
         #loggings.bind('<<TreeviewSelect>>', select_router)
-        self.loggings.grid(row=1,column=0)
+        self.loggings.grid(row=1, column=0)
 
         # LOAD IN TABLE
         txt = open("./data/gui_logs.txt", "r", encoding="latin-1")
@@ -844,7 +877,7 @@ class ThreadedClient(threading.Thread):
 
                 ab_test = Autobidder(self.driver, self.queue)
                 ab_test.test()
-        
+
             if (self.action == "autobidder"):
                 if (self.firstStart):
                     self.autobidder_reloaded.initializeBot()
@@ -854,7 +887,7 @@ class ThreadedClient(threading.Thread):
             if (self.action == "login"):
                 self.queue.put("Logging in")
                 time.sleep(5)
-                
+
                 txt = open("./data/logins.txt", "r")
                 counter = 0
                 credentials = []
@@ -876,9 +909,10 @@ class ThreadedClient(threading.Thread):
 
                 login(self.queue, self.driver, USER, EMAIL_CREDENTIALS)
             if (self.action == "add player"):
-                getFutbinDataAndPopulateTable(self.driver, self.queue, self.futbinurl)
+                getFutbinDataAndPopulateTable(
+                    self.driver, self.queue, self.futbinurl)
         finally:
-            print("Stopped thread")
+            log_event(self.queue, "Thread stopped")
 
     def get_id(self):
         # returns id of the respective thread
@@ -891,10 +925,11 @@ class ThreadedClient(threading.Thread):
     def raise_exception(self):
         thread_id = self.get_id()
         res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
-              ctypes.py_object(SystemExit))
+                                                         ctypes.py_object(SystemExit))
         if res > 1:
             ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
             print('Thread killed')
+
 
 # TODO insert create logins.txt method here, that makes first line say not entered - update msgbox method
 clearOldUserData_nonclass()

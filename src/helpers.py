@@ -23,6 +23,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support import ui
 from selenium.webdriver.support.wait import WebDriverWait
 
+CONFIG_PATH = './data/config.json'
 
 class Helper:
     def __init__(self, driver, queue):
@@ -769,8 +770,12 @@ class Helper:
 
         if (num_players_to_bid_on != 1):
             bidsallowed = 50 - int(data[2])
-            bidstomake_eachplayer = round(
-                bidsallowed/num_players_to_bid_on) - 1
+            try:
+                bidstomake_eachplayer = round(
+                    bidsallowed/num_players_to_bid_on) - 1
+            except ZeroDivisionError:
+                log_event(self.queue, "Players must be added before running bidder.")
+                raise
 
             self.user_num_bids_each_target = bidstomake_eachplayer
         elif (num_players_to_bid_on == 1):
@@ -2639,9 +2644,6 @@ def getUserConfigNonClass():
     if (buyceiling > 1):
         buyceiling = 0.85
 
-    if (sellceiling > 1):
-        sellceiling = 1
-
     # Return values but this really shouldn't be used - only used on initialization
     return conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling
 
@@ -2651,3 +2653,15 @@ def open_and_switch_to_tab(browser, url):
     new_tab_index = len(browser.window_handles) - 1
     browser.switch_to.window(browser.window_handles[new_tab_index])
     browser.get(url)
+
+def config_exists():
+    if (not os.path.exists(CONFIG_PATH)):
+        return False
+
+    with open('./data/config.json', 'r') as f:
+        try:
+            json.load(f)
+        except Exception:
+            return False
+
+    return True
