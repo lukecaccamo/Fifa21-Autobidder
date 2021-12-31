@@ -232,22 +232,22 @@ class Helper:
                         if "highest-bid" not in bidStatus:
                             stopbidTime = int(self.bidexpiration_ceiling)
                             if timeremainingmins < stopbidTime:
-                                if timeremainingmins >= 2:
-                                    # Check if bid to make falls under ceiling
-                                    if (curbid < 1000):
-                                        curbidprice_afterbidding = curbid+50
+                                # I don't see a reason for this condition: if timeremainingmins >= 2:
+                                # Check if bid to make falls under ceiling
+                                if (curbid < 1000):
+                                    curbidprice_afterbidding = curbid+50
+                                else:
+                                    curbidprice_afterbidding = curbid+100
+                                if curbidprice_afterbidding <= max_price_to_pay:
+                                    if ((curbid*2)<self.user_num_coins):
+                                        self.makebid_individualplayer(
+                                            playernumber, max_price_to_pay)
+                                        self.sleep_approx(2)
+                                        bids_made += 1
+                                        log_event(self.queue, "Bids made on " + str(name) +
+                                                ": " + str(bids_made) + "/" + str(bids_allowed))
                                     else:
-                                        curbidprice_afterbidding = curbid+100
-                                    if curbidprice_afterbidding < max_price_to_pay:
-                                        if ((curbid*2)<self.user_num_coins):
-                                            self.makebid_individualplayer(
-                                                playernumber, max_price_to_pay)
-                                            self.sleep_approx(2)
-                                            bids_made += 1
-                                            log_event(self.queue, "Bids made on " + str(name) +
-                                                    ": " + str(bids_made) + "/" + str(bids_allowed))
-                                        else:
-                                            log_event(self.queue, "not enough coins")
+                                        log_event(self.queue, "not enough coins")
                             else:
                                 keepgoing = False
                     else:
@@ -1945,11 +1945,7 @@ class Helper:
             log_event(self.queue, "setting it to .85: ")
             buyceiling = 0.85
 
-        if (sellceiling > 1):
-            log_event(self.queue, "sell ceiling greater than 1: " +
-                      str(sellceiling))
-            log_event(self.queue, "setting it to .95 ")
-            sellceiling = 0.95
+        log_event(self.queue, "sell ceiling is: " + str(sellceiling))
 
         self.conserve_bids = conserve_bids
         self.sleep_time = sleep_time
@@ -2401,7 +2397,6 @@ def get_access_code(queue, email_credentials):
     try:
         M.login(email_credentials["email"], email_credentials["password"])
     except imaplib.IMAP4.error:
-        # print("Login to email failed")
         log_event(
             queue, "Unable to fetch access code from email (see ReadMe for help on this), enter it manually")
         sys.exit(1)
@@ -2535,10 +2530,12 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     raw_price_data = driver.find_element(By.XPATH, "html/body").text
 
     data = json.loads(raw_price_data)
-
+    
     # Console should be made configurable
     # The second lowest price is used to try to eliminate underpriced listings
-    price = data[str(internal_id)]["prices"]["pc"]["LCPrice2"]
+    second_lowest_price = data[str(internal_id)]["prices"]["pc"]["LCPrice2"]
+    lowest_price = data[str(internal_id)]["prices"]["pc"]["LCPrice"]
+    price = second_lowest_price if second_lowest_price != 0 else lowest_price 
     lastupdated = data[str(internal_id)]["prices"]["pc"]["updated"]
 
     # 18 mins ago

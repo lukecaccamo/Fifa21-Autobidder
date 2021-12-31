@@ -1,3 +1,4 @@
+import ctypes
 import importlib
 import json
 import os
@@ -519,7 +520,7 @@ class MainButtons(tk.Frame):
         # BUY CEILING
         self.buyceiling_label = tk.Label(self.autobidderFrame, text='Buy ceiling: ', font=SMALL_FONT)
         self.buyceiling_label.grid(row=num_autobidder_labels+6, column=0)
-        self.BUYCHOICE = [75,80,85, 90, 95, 100]
+        self.BUYCHOICE = [25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95, 100]
         self.buyceiling_option = tk.IntVar()
         self.buyceiling_option.set(self.BUYCHOICE[0])
         self.buyceiling_dropdown = OptionMenu(self.autobidderFrame, self.buyceiling_option, *self.BUYCHOICE)
@@ -528,7 +529,7 @@ class MainButtons(tk.Frame):
         # SELL CEILING
         self.sellceiling_label = tk.Label(self.autobidderFrame, text='Sell ceiling: ', font=SMALL_FONT)
         self.sellceiling_label.grid(row=num_autobidder_labels+7, column=0)
-        self.SELLCHOICE = [80,85,90,95]
+        self.SELLCHOICE = [80, 85, 90, 95, 100, 125, 150, 175, 200]
         self.sellceiling_option = tk.IntVar()
         self.sellceiling_option.set(self.SELLCHOICE[0])
         self.sellceiling_dropdown = OptionMenu(self.autobidderFrame, self.sellceiling_option, *self.SELLCHOICE)
@@ -552,10 +553,11 @@ class MainButtons(tk.Frame):
 
     def startAutobidder(self):
         devModeState = self.controller.playerfilters.dev_choice.get()
-        if (devModeState == 1):
+        if (not self.isFirstStart and self.thread.isAlive()):
+            self.stopAutobidder()
+        elif (devModeState == 1):
             print("devmode enabled on button click startAutobidder")
             # Disable the start button
-            self.test2.config(state="disabled")
             self.startautobidder_label.set("Autobidder devmode")
             self.controller.playerfilters.add_btn_futbin.config(state="disabled")
             self.controller.playerfilters.remove_btn.config(state="disabled")
@@ -565,14 +567,21 @@ class MainButtons(tk.Frame):
             self.periodiccall()
             self.isFirstStart = False
         else:
-            # Disable the start button
-            self.test2.config(state="disabled")
+            # Disable the add player buttons
             self.startautobidder_label.set("Autobidder Running")
             self.controller.playerfilters.add_btn_futbin.config(state="disabled")
             self.controller.playerfilters.remove_btn.config(state="disabled")
             parent_autobidder = Autobidder(self.driver, self.controller.parentQueue)
             self.thread = ThreadedClient(self.controller.parentQueue, self.isFirstStart, "autobidder", self.driver, parent_autobidder)
             self.thread.start()
+            self.periodiccall()
+            self.isFirstStart = False
+
+    def stopAutobidder(self):
+            self.startautobidder_label.set("Autobidder")
+            self.controller.playerfilters.add_btn_futbin.config(state="active")
+            self.controller.playerfilters.remove_btn.config(state="active")
+            self.thread.raise_exception()
             self.periodiccall()
             self.isFirstStart = False
 
@@ -822,52 +831,70 @@ class ThreadedClient(threading.Thread):
         self.autobidder_reloaded = autobidder_reloaded
 
     def run(self):
-        if (self.action == "watchlist"):
-            self.autobidder_reloaded.manageWatchlist()
+        try:
+            if (self.action == "watchlist"):
+                self.autobidder_reloaded.manageWatchlist()
 
-        if (self.action == "autobidder developer"):
-            importlib.reload(autobidder)
-            importlib.reload(helpers)
+            if (self.action == "autobidder developer"):
+                importlib.reload(autobidder)
+                importlib.reload(helpers)
 
-            from autobidder import Autobidder
-            from helpers import Helper
+                from autobidder import Autobidder
+                from helpers import Helper
 
-            ab_test = Autobidder(self.driver, self.queue)
-            ab_test.test()
-      
-        if (self.action == "autobidder"):
-            if (self.firstStart):
-                self.autobidder_reloaded.initializeBot()
-            else:
-                self.autobidder_reloaded.start()
+                ab_test = Autobidder(self.driver, self.queue)
+                ab_test.test()
+        
+            if (self.action == "autobidder"):
+                if (self.firstStart):
+                    self.autobidder_reloaded.initializeBot()
+                else:
+                    self.autobidder_reloaded.start()
 
-        if (self.action == "login"):
-            self.queue.put("Logging in")
-            time.sleep(5)
-            
-            txt = open("./data/logins.txt", "r")
-            counter = 0
-            credentials = []
-            for aline in txt:
-                counter += 1
-                line = aline.strip("\n")
-                credentials.append(str(line))
-            txt.close()
+            if (self.action == "login"):
+                self.queue.put("Logging in")
+                time.sleep(5)
+                
+                txt = open("./data/logins.txt", "r")
+                counter = 0
+                credentials = []
+                for aline in txt:
+                    counter += 1
+                    line = aline.strip("\n")
+                    credentials.append(str(line))
+                txt.close()
 
-            USER = {
-                "email": credentials[0],
-                "password": credentials[1],
-            }
+                USER = {
+                    "email": credentials[0],
+                    "password": credentials[1],
+                }
 
-            EMAIL_CREDENTIALS = {
-                "email": credentials[2],
-                "password": credentials[3],
-            }
+                EMAIL_CREDENTIALS = {
+                    "email": credentials[2],
+                    "password": credentials[3],
+                }
 
-            login(self.queue, self.driver, USER, EMAIL_CREDENTIALS)
-        if (self.action == "add player"):
-            getFutbinDataAndPopulateTable(self.driver, self.queue, self.futbinurl)
+                login(self.queue, self.driver, USER, EMAIL_CREDENTIALS)
+            if (self.action == "add player"):
+                getFutbinDataAndPopulateTable(self.driver, self.queue, self.futbinurl)
+        finally:
+            print("Stopped thread")
 
+    def get_id(self):
+        # returns id of the respective thread
+        if hasattr(self, '_thread_id'):
+            return self._thread_id
+        for id, thread in threading._active.items():
+            if thread is self:
+                return id
+
+    def raise_exception(self):
+        thread_id = self.get_id()
+        res = ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id,
+              ctypes.py_object(SystemExit))
+        if res > 1:
+            ctypes.pythonapi.PyThreadState_SetAsyncExc(thread_id, 0)
+            print('Thread killed')
 
 # TODO insert create logins.txt method here, that makes first line say not entered - update msgbox method
 clearOldUserData_nonclass()

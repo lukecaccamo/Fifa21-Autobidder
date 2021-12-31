@@ -68,19 +68,24 @@ class Autobidder:
 
             # Get player's known value - either from FUTBIN, or via market logs
             known_value = 0
-            if (marketprice == 0):
-                known_value = futbinprice
-                log_event(self.queue, str(player[1]) + " FUTBIN price: " + str(futbinprice) + " (will find actual price) ")
+            #if (marketprice == 0):
+            known_value = futbinprice
+            log_event(self.queue, str(player[1]) + " FUTBIN price: " + str(futbinprice) + " (will find actual price) ")
+            
+            # Market price is not accurate the way it is currently calculated
+            """
             else:
                 known_value = marketprice
                 log_event(self.queue, str(player[1]) + " MARKET price: " + str(marketprice))
+            """
 
             max_price_to_pay = int(round(buyceiling * known_value, -2))
             log_event(self.queue, str(player[1]) + " stop price = buy ceiling (" + str(buyceiling) + ") * (" + str(known_value) + ") = " + str(max_price_to_pay))
 
             # Modulate bid params to capture all players on market
             min_bid = 0
-            max_bid = int(round(max_price_to_pay*.75, -2))
+            # max_bid = int(round(max_price_to_pay * 0.75, -2))
+            max_bid = max_price_to_pay
 
             for x in range(4):
                 min_bid = int(round((max_bid * .8), -2))
