@@ -31,6 +31,7 @@ import helpers
 from autobidder import Autobidder
 from autobuyer import Autobuyer
 from helpers import *
+from datafile_manager import *
 import threading
 import time
 
@@ -72,6 +73,9 @@ class GUI(tk.Tk):
         # BOTTOM RIGHT Logs
         self.displaylogs.grid(
             row=2, column=0, sticky="nsew", padx="5", pady="5")
+
+        # Start checking table for updates
+        self.playerfilters.update_list()
 
 
 # Top right
@@ -153,7 +157,6 @@ class PlayerFilters(tk.Frame):
 
     def chooseLoginType(self):
         choice = str(self.autologin_choice.get())
-        self.update_list()
 
         if (choice == "1"):
             login_exists = path.exists("./data/logins.txt")
@@ -208,7 +211,7 @@ class PlayerFilters(tk.Frame):
         self.thread.start()
         self.periodiccall()
 
-    def update_list(self):
+    def update_list(self, single_call = False):
         for i in self.controller.table.router_tree_view.get_children():
             self.controller.table.router_tree_view.delete(i)
 
@@ -218,6 +221,9 @@ class PlayerFilters(tk.Frame):
         conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling = getUserConfigNonClass()
 
         for aline in txt:
+            if aline == '\n':
+                continue
+
             values2 = aline.strip("\n").split(",")
             # print(values2)
             cardname = values2[1]
@@ -225,6 +231,8 @@ class PlayerFilters(tk.Frame):
             futbinprice = values2[9]
             realprice = values2[11]
             buypct = values2[12]
+            buy_price_override = values2[13]
+            sell_price_override = values2[14]
 
             values_small_view = []
             values_small_view.append(cardname)
@@ -235,12 +243,18 @@ class PlayerFilters(tk.Frame):
             values_small_view.append(buyceiling)
             values_small_view.append(sellceiling)
 
+            values_small_view.append(buy_price_override)
+            values_small_view.append(sell_price_override)
+
+            futbin_id_idx = PLAYER_LIST_FIELDS.index('futbin_id')
+
             self.controller.table.router_tree_view.insert(
-                '', 'end', values=values_small_view)
+                '', 'end', values=values_small_view, iid=values2[futbin_id_idx])
         txt.close()
 
         # Every 10 seconds refresh
-        self.after(10000, self.update_list)
+        if (not single_call):
+            self.after(10000, self.update_list)
 
     def remove_player(self):
         index = self.controller.table.router_tree_view.selection()[0]
@@ -254,6 +268,8 @@ class PlayerFilters(tk.Frame):
 
         entries_to_stay = []
         for line in txt:
+            if line == '\n':
+                continue
             line = line.strip("\n")
             line_arr = line.split(",")
 
@@ -280,7 +296,7 @@ class PlayerFilters(tk.Frame):
             hs.write(line + "\n")
         hs.close()
 
-        self.update_list()
+        self.update_list(True)
 
     def loginUser(self):
         choice = str(self.autologin_choice.get())
@@ -350,7 +366,6 @@ class PlayerFilters(tk.Frame):
         file_object.close()
 
     def popupmsg(self, msg):
-        self.update_list()
         popup = tk.Tk()
         popup.wm_title("Note")
         label = ttk.Label(popup, text=msg, font=NORM_FONT)
@@ -380,7 +395,7 @@ class Table(tk.Frame):
 
         # Player list table
         columns = ["Name", "Rating", "Futbin Price",
-                   "Real Price", "Buy %", "Sell %"]
+                   "Real Price", "Buy %", "Sell %", "B/P Override", "S/P Override"]
 
         self.router_tree_view = Treeview(
             self, columns=columns, show="headings", height=5)
@@ -388,13 +403,13 @@ class Table(tk.Frame):
 
         for col in columns:
             colwidth = 70
-            if col == "Card name":
-                colwidth = 135
             self.router_tree_view.column(col, width=colwidth)
             self.router_tree_view.heading(col, text=col)
 
         #router_tree_view.bind('<<TreeviewSelect>>', select_router)
         self.router_tree_view.grid(row=1, column=0)
+
+        self.router_tree_view.bind("<Double-1>", self.on_double_click)
 
         # LOAD IN TABLE
         txt = open("./data/player_list.txt", "r", encoding="utf8")
@@ -404,6 +419,9 @@ class Table(tk.Frame):
         conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling = getUserConfigNonClass()
         #self.playerlist = []
         for aline in txt:
+            if aline == '\n':
+                continue
+
             values2 = aline.strip("\n").split(",")
             # print(values2)
             self.playerlist.append(values2)
@@ -412,6 +430,8 @@ class Table(tk.Frame):
             futbinprice = values2[9]
             realprice = values2[11]
             buypct = values2[12]
+            buy_price_override = values2[13]
+            sell_price_override = values2[14]
 
             values_small_view = []
             values_small_view.append(cardname)
@@ -422,9 +442,77 @@ class Table(tk.Frame):
             values_small_view.append(buyceiling)
             values_small_view.append(sellceiling)
 
-            # print(values_small_view)
-            self.router_tree_view.insert('', 'end', values=values_small_view)
+            values_small_view.append(buy_price_override)
+            values_small_view.append(sell_price_override)
+
+            futbin_id_idx = PLAYER_LIST_FIELDS.index('futbin_id')
+
+            self.router_tree_view.insert('', 'end', values=values_small_view, iid=values2[futbin_id_idx])
         txt.close()
+
+    def on_double_click(self, event):
+        ''' Executed, when a row is double-clicked. Opens
+        read-only EntryPopup above the item's column, so it is possible
+        to select text '''
+
+        # close previous popups
+        # self.destroyPopups()
+
+        # what row and column was clicked on
+        rowid = self.router_tree_view.identify_row(event.y)
+        column = self.router_tree_view.identify_column(event.x)
+
+        # get column position info
+        x,y,width,height = self.router_tree_view.bbox(rowid, column)
+
+        # y-axis offset
+        # pady = height // 2
+        pady = 0
+
+        # place Entry popup properly         
+        # text = self.router_tree_view.item(rowid, 'text')
+        selected_item = self.router_tree_view.selection()[0]
+        value_list = self.router_tree_view.item(selected_item, 'values')
+
+        self.entryPopup = EntryPopup(self.router_tree_view, selected_item, column, value_list[int(column[1]) - 1])
+        self.entryPopup.place( x=0, y=y+pady, anchor=W, relwidth=1)
+
+class EntryPopup(Entry):
+
+    def __init__(self, parent, selected_item, column_id, text, **kw):
+        ''' If relwidth is set, then width is ignored '''
+        super().__init__(parent, **kw)
+        self.tv = parent
+
+        self.iid = selected_item
+        self.column_id = column_id
+
+        self.insert(0, text)
+        # self['state'] = 'readonly'
+        # self['readonlybackground'] = 'white'
+        # self['selectbackground'] = '#1BA1E2'
+        self['exportselection'] = False
+
+        self.focus_force()
+        self.bind("<Return>", self.on_return)
+        self.bind("<Control-a>", self.select_all)
+        self.bind("<Escape>", lambda *ignore: self.destroy())
+
+    def on_return(self, event):
+        player_info = find_player_in_list_file(self.iid)
+        table_changed_idx = int(self.column_id[1]) - 1
+        changed_field = TABLE_LIST_FIELDS[table_changed_idx]
+        file_changed_idx = PLAYER_LIST_FIELDS.index(changed_field)
+        player_info[file_changed_idx] = self.get()
+        add_or_update_player_list_file(player_info)
+        self.destroy()
+
+    def select_all(self, *ignore):
+        ''' Set selection on the whole text '''
+        self.selection_range(0, 'end')
+
+        # returns 'break' to interrupt default key-bindings
+        return 'break'
 
 # Full Left
 
@@ -696,7 +784,7 @@ class MainButtons(tk.Frame):
         with open('./data/config.json', 'w') as f:
             f.write(json.dumps(json_data))
 
-        self.controller.playerfilters.update_list()
+        self.controller.playerfilters.update_list(True)
 
     def chooseSafeMode(self):
         choice = self.autobidder_safe_option.get()

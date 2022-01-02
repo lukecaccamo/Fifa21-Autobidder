@@ -11,6 +11,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support import ui
 from selenium.webdriver.support.wait import WebDriverWait
+from datafile_manager import get_player_list
 
 import helpers
 from helpers import *
@@ -41,7 +42,7 @@ class Autobidder:
         self.helper.clearOldMarketLogs()
 
         # Get player list
-        self.playerlist = self.helper.getPlayerListFromGUI()
+        self.playerlist = get_player_list()
         bidsallowed, bidstomake_eachplayer = self.helper.getWatchlistTransferlistSize()
 
         self.helper.user_num_target_players = len(self.playerlist)
@@ -57,6 +58,7 @@ class Autobidder:
             futbinprice = int(player[9])
             marketprice = int(player[11])
             buy_percent = float(player[12])
+            buy_price_override = int(player[13])
 
             conserve_bids, sleep_time, botspeed, bidexpiration_ceiling, buyceiling, sellceiling = self.helper.getUserConfig()
 
@@ -66,21 +68,17 @@ class Autobidder:
                 continue_running = False
                 break
 
-            # Get player's known value - either from FUTBIN, or via market logs
-            known_value = 0
-            #if (marketprice == 0):
+            # Get player's known value - either from FUTBIN, or from override
             known_value = futbinprice
-            log_event(self.queue, str(player[1]) + " FUTBIN price: " + str(futbinprice) + " (will find actual price) ")
-            
-            # Market price is not accurate the way it is currently calculated
-            """
-            else:
-                known_value = marketprice
-                log_event(self.queue, str(player[1]) + " MARKET price: " + str(marketprice))
-            """
+            max_price_to_pay = 0
+            log_event(self.queue, str(player[1]) + " FUTBIN price: " + str(futbinprice))
 
-            max_price_to_pay = int(round(buyceiling * known_value, -2))
-            log_event(self.queue, str(player[1]) + " stop price = buy ceiling (" + str(buyceiling) + ") * (" + str(known_value) + ") = " + str(max_price_to_pay))
+            if buy_price_override > 0:
+                max_price_to_pay = buy_price_override
+                log_event(self.queue, 'Overriding max buy price with: ' + str(buy_price_override))
+            else:
+                max_price_to_pay = int(round(buyceiling * known_value, -2))
+                log_event(self.queue, str(player[1]) + " stop price = buy ceiling (" + str(buyceiling) + ") * (" + str(known_value) + ") = " + str(max_price_to_pay))
 
             # Modulate bid params to capture all players on market
             min_bid = 0
@@ -104,7 +102,7 @@ class Autobidder:
             # Parse market data to find actual sell price 
             log_event(self.queue, "Parsing market data to find most accurate sell prices...")
             self.helper.get_lowestbin_from_searchdata()
-    
+
             log_event(self.queue, "Going to watchlist. Time for war")
             # self.helper.go_to_watchlist()
             self.manageWatchlist()

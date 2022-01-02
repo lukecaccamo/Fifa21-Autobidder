@@ -1,4 +1,5 @@
 import csv
+import shutil
 import email
 import imaplib
 import json
@@ -9,6 +10,8 @@ import sys
 from csv import reader
 from datetime import datetime
 from time import sleep
+from tempfile import NamedTemporaryFile
+from tkinter.ttk import Treeview
 
 import pandas as pd
 import requests
@@ -22,8 +25,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support import ui
 from selenium.webdriver.support.wait import WebDriverWait
-
-CONFIG_PATH = './data/config.json'
 
 class Helper:
     def __init__(self, driver, queue):
@@ -65,7 +66,7 @@ class Helper:
         self.conserve_bids, self.sleep_time, self.botspeed, self.bidexpiration_ceiling, self.buyceiling, self.sellceiling = self.getUserConfig()
         self.p_ids_and_prices = {}
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Main methods
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Main methods
 
     def go_to_tranfer_market_and_input_parameters(self, cardname, fullname, cardoverall):
         """
@@ -696,21 +697,27 @@ class Helper:
             marketprice * user_buyceiling_percent (float)
         """
         # Get target players IDs
-        txt = open("./data/player_list.txt", "r", encoding="utf8")
-        for aline in txt:
-            values2 = aline.strip("\n").split(",")
-            line_id = int(values2[7])
-            inputid = int(playerid)
-            diff = line_id - inputid
+        with open("./data/player_list.txt", "r", encoding="utf8") as txt:
+            for aline in txt:
+                if (aline == '\n'):
+                    continue
+                values2 = aline.strip("\n").split(",")
+                line_id = int(values2[7])
+                inputid = int(playerid)
+                diff = line_id - inputid
 
-            futbinprice = int(values2[9])
-            marketprice = int(values2[11])
-            if (diff == 0):
-                if (marketprice == 0):
-                    return (futbinprice * self.sellceiling)
-                else:
-                    return (marketprice * self.sellceiling)
-        txt.close()
+                futbinprice = int(values2[9])
+                marketprice = int(values2[11])
+                sell_price_override = int(values2[14])
+
+                if sell_price_override > 0:
+                    return sell_price_override
+
+                if (diff == 0):
+                    if (marketprice == 0):
+                        return (futbinprice * self.sellceiling)
+                    else:
+                        return (marketprice * self.sellceiling)
 
         # If not found, return 0
         return 0
@@ -792,7 +799,7 @@ class Helper:
                   str(bidstomake_eachplayer))
         return bidsallowed, bidstomake_eachplayer
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Watchlist methods
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Watchlist methods
 
     def getWatchlistSummary(self):
         """
@@ -1246,7 +1253,7 @@ class Helper:
         except:
             log_event(self.queue, "Error sending won p to TL")
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Transferlist methods
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Transferlist methods
 
     def getTransferListSummary(self):
         """
@@ -1657,7 +1664,7 @@ class Helper:
             log_event(self.queue, e)
 
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Button clicks / getters
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Button clicks / getters
 
     def findElement_and_wait(self, xpath):
         """
@@ -1818,7 +1825,7 @@ class Helper:
         self.sleep_approx(1)
 
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Navigation
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ Navigation
 
     def go_to_transfer_market(self):
         """
@@ -1910,7 +1917,7 @@ class Helper:
         )
 
 
-# ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ General
+    # ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ ~ General
 
     def getUserConfig(self):
         """
@@ -2535,7 +2542,7 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     raw_price_data = driver.find_element(By.XPATH, "html/body").text
 
     data = json.loads(raw_price_data)
-    
+
     # Console should be made configurable
     # The second lowest price is used to try to eliminate underpriced listings
     second_lowest_price = data[str(internal_id)]["prices"]["pc"]["LCPrice2"]
@@ -2573,10 +2580,11 @@ def getFutbinDataAndPopulateTable(driver, queue, futbin_url):
     futbin_id = int(futbin_id)
     market_price = 0
 
-    # Buy percentage should also be confgurable
     buy_pct = .85
+    buy_price_override = 0
+    sell_price_override = 0
     agg = [name, cardname, rating, team, nation, cardtype, position,
-           internal_id, futbin_id, price, lastupdated, market_price, buy_pct]
+           internal_id, futbin_id, price, lastupdated, market_price, buy_pct, buy_price_override, sell_price_override]
 
     full_entry = ""
     for word in agg:
@@ -2653,15 +2661,3 @@ def open_and_switch_to_tab(browser, url):
     new_tab_index = len(browser.window_handles) - 1
     browser.switch_to.window(browser.window_handles[new_tab_index])
     browser.get(url)
-
-def config_exists():
-    if (not os.path.exists(CONFIG_PATH)):
-        return False
-
-    with open('./data/config.json', 'r') as f:
-        try:
-            json.load(f)
-        except Exception:
-            return False
-
-    return True
