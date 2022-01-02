@@ -26,6 +26,8 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support import ui
 from selenium.webdriver.support.wait import WebDriverWait
 
+from datafile_manager import find_player_in_list_file
+
 class Helper:
     def __init__(self, driver, queue):
         self.driver = driver
@@ -664,24 +666,23 @@ class Helper:
             marketprice * user_buyceiling_percent (float)
         """
         # Get target players IDs
-        txt = open("./data/player_list.txt", "r", encoding="utf8")
-        for aline in txt:
-            values2 = aline.strip("\n").split(",")
-            line_id = int(values2[7])
-            inputid = int(playerid)
-            diff = line_id - inputid
 
-            futbinprice = int(values2[9])
-            marketprice = int(values2[11])
-            if (diff == 0):
-                if (marketprice == 0):
-                    return (futbinprice * self.buyceiling)
-                else:
-                    return (marketprice * self.buyceiling)
-        txt.close()
+        player_info = find_player_in_list_file(str(playerid), 'internal_id')
 
-        # If player isn't found, return 0
-        return 0
+        if player_info is None:
+            return 0
+
+        futbinprice = int(player_info[9])
+        marketprice = int(player_info[11])
+        buy_price_override = int(player_info[13])
+
+        if buy_price_override > 0:
+            return buy_price_override
+
+        if (marketprice == 0):
+            return (futbinprice * self.buyceiling)
+
+        return (marketprice * self.buyceiling)
 
     def getPlayerSellPrice(self, playerid):
         """
@@ -697,30 +698,22 @@ class Helper:
             marketprice * user_buyceiling_percent (float)
         """
         # Get target players IDs
-        with open("./data/player_list.txt", "r", encoding="utf8") as txt:
-            for aline in txt:
-                if (aline == '\n'):
-                    continue
-                values2 = aline.strip("\n").split(",")
-                line_id = int(values2[7])
-                inputid = int(playerid)
-                diff = line_id - inputid
+        player_info = find_player_in_list_file(str(playerid), 'internal_id')
+        
+        if player_info is None:
+            return 0
 
-                futbinprice = int(values2[9])
-                marketprice = int(values2[11])
-                sell_price_override = int(values2[14])
+        futbinprice = int(player_info[9])
+        marketprice = int(player_info[11])
+        sell_price_override = int(player_info[14])
 
-                if sell_price_override > 0:
-                    return sell_price_override
+        if sell_price_override > 0:
+            return sell_price_override
 
-                if (diff == 0):
-                    if (marketprice == 0):
-                        return (futbinprice * self.sellceiling)
-                    else:
-                        return (marketprice * self.sellceiling)
+        if (marketprice == 0):
+            return (futbinprice * self.sellceiling)
 
-        # If not found, return 0
-        return 0
+        return (marketprice * self.sellceiling)
 
     def getWatchlistTransferlistSize(self):
         """
@@ -2231,6 +2224,8 @@ class Helper:
         txt = open(src, "r", encoding="utf8")
 
         for aline in txt:
+            if aline == '\n':
+                continue
             values = aline.strip("\n").split(",")
             playerlist.append(values)
         txt.close()

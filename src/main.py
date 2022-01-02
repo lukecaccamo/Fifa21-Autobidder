@@ -501,7 +501,7 @@ class EntryPopup(Entry):
         self.bind("<Escape>", lambda *ignore: self.destroy())
 
     def on_return(self, event):
-        player_info = find_player_in_list_file(self.iid)
+        player_info = find_player_in_list_file(self.iid, 'futbin_id')
         table_changed_idx = int(self.column_id[1]) - 1
         changed_field = TABLE_LIST_FIELDS[table_changed_idx]
         file_changed_idx = PLAYER_LIST_FIELDS.index(changed_field)

@@ -54,11 +54,11 @@ def add_or_update_player_list_file(player_info: list):
         hs.write(full_entry + "\n")
         hs.close()
 
-def find_player_in_list_file(player_id: str):
+def find_player_in_list_file(player_id: str, searchprop: str):
     with open(PLAYER_LIST_FILENAME, 'r', encoding='utf8') as file:
         reader = csv.DictReader(file, fieldnames=PLAYER_LIST_FIELDS)
         for row in reader:
-            if row['futbin_id'] == player_id:
+            if row[searchprop] == player_id:
                 return list(row.values())
     return None
 
