@@ -6,6 +6,8 @@ import os.path
 import platform
 import queue
 import tkinter as tk
+import pathlib
+
 from importlib import reload
 from importlib import import_module
 
@@ -826,6 +828,10 @@ class MainButtons(tk.Frame):
 
         # For ChromeDriver version 79.0.3945.16 or over
         option.add_argument('--disable-blink-features=AutomationControlled')
+
+        scriptDirectory = pathlib.Path().absolute()
+        
+        option.add_argument(f"user-data-dir={scriptDirectory.parent}\\chrome_data")
 
         driver = webdriver.Chrome(executable_path=path, options=option)
         driver.maximize_window()
